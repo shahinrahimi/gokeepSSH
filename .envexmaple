@@ -1,0 +1,3 @@
+VPS_ADDRESS="<user>@<ip_address>"
+LOCAL_PORT="1010"
+SSH_KEY_PATH="/path/to/your/ssh_key"
