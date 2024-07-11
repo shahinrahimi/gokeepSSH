@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -11,35 +10,36 @@ import (
 )
 
 func main() {
+
+	l := log.New(os.Stdout, "[gokeepSSH] ", log.LstdFlags)
 	if err := godotenv.Load(); err != nil {
-		log.Fatal("Error loading .env file")
+		l.Fatal("Error loading .env file")
 	}
 
 	vpsAddress := os.Getenv("VPS_ADDRESS")
 	localPort := os.Getenv("LOCAL_PORT")
 	sshKey := os.Getenv("SSH_KEY_PATH")
+	var counter int = 0
 	if vpsAddress == "" || localPort == "" || sshKey == "" {
-		log.Fatal("Wrong local variables.")
+		l.Fatal("Wrong local variables.")
 	}
 	for {
-		err := startSSHTunnel(vpsAddress, localPort, sshKey)
+		err := startSSHTunnel(vpsAddress, localPort, sshKey, l)
+		counter++
+
 		if err != nil {
-			log.Printf("SSH tunnel error: %v", err)
+			l.Printf("SSH tunnel error[%d]: %v", counter, err)
 		}
-		log.Println("SSH trunnel terminated, retrying in 5 seconds...")
+		l.Println("SSH trunnel terminated, retrying in 5 seconds...")
 		time.Sleep(5 * time.Second)
 	}
 
 }
 
-func startSSHTunnel(vpsAddress, localPort, sshKey string) error {
+func startSSHTunnel(vpsAddress, localPort, sshKey string, l *log.Logger) error {
 	cmd := exec.Command("ssh", "-i", sshKey, "-D", localPort, "-N", vpsAddress)
 	cmd.Stdout = log.Writer()
 	cmd.Stderr = log.Writer()
-	log.Println("Starting SSH tunnel to %s on local port %s", vpsAddress, localPort)
-	err := cmd.Run()
-	if err != nil {
-		return fmt.Errorf("failed to start SSH tunnel: %w", err)
-	}
-	return nil
+	l.Printf("Starting SSH tunnel to %s on local port %s", vpsAddress, localPort)
+	return cmd.Run()
 }
